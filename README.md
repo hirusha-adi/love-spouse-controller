@@ -1,5 +1,7 @@
 # Love Spouse Controller
 
+<img width="1672" height="941" alt="image" src="https://github.com/user-attachments/assets/56169fd4-45c6-4a0f-8ae8-91c28b5f5f26" />
+
 An Android app for controlling BLE-based intimate devices that are compatible with the Love Spouse ecosystem. This includes a wide range of white-label and generic adult toys sold under various brand names that all use the same underlying BLE advertising protocol.
 
 ## Compatible Devices
