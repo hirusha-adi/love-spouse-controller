@@ -1,0 +1,17 @@
+LS Controller is an independent, free and open-source Android controller for intimate devices compatible with the Love Spouse / Weibu IoT Bluetooth Low Energy advertising protocol.
+
+Features:
+* Nine vibration modes
+* Heat on/off commands on supported devices
+* Five suction levels on supported devices
+* Cycle through five included device prefixes, or select a specific prefix
+* Material You colors on Android 12 and later, with light and dark themes
+* English interface
+
+The app works offline. It has no accounts, ads, analytics, Internet permission, cloud services, or dependency on the official Love Spouse app. Bluetooth advertising permission is needed on Android 12 and later. Android 8.0 or later and a phone that supports BLE advertising are required.
+
+No pairing or BLE connection is used. Devices listen for broadcast commands. The app cannot read battery level, detect a device, or confirm that a command was received. Prefix cycling may reach multiple nearby compatible devices. Use it only with devices you own and with the consent of anyone using them.
+
+Stop Device broadcasts a stop command. Stop Broadcasting or tapping the selected command again ends transmission without sending a stop command; a device may continue its last action.
+
+This app is intended for adults. Compatibility depends on device firmware, and heating and suction are available only on devices that support those functions. This project is not affiliated with or endorsed by Love Spouse or device manufacturers.

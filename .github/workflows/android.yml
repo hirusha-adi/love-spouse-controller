@@ -1,0 +1,45 @@
+name: Android release checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install pinned Android SDK packages
+        run: sdkmanager "platforms;android-35" "build-tools;34.0.0"
+      - name: Check upstream F-Droid metadata
+        run: python3 tools/check_metadata.py
+      - name: Install distribution review tools
+        run: |
+          python3 -m venv /tmp/lscontroller-checks
+          /tmp/lscontroller-checks/bin/pip install fdroidserver==2.4.5 reuse==6.2.0
+      - name: Check F-Droid recipe and licensing
+        run: |
+          /tmp/lscontroller-checks/bin/python tools/check_fdroid.py
+          /tmp/lscontroller-checks/bin/reuse lint
+      - name: Build and lint with dependency verification
+        run: ./gradlew --no-daemon --dependency-verification strict assembleDebug assembleRelease lintRelease
+      - name: Check release reproducibility
+        run: python3 tools/check_reproducibility.py
+      - name: Scan release APK for non-free components
+        run: /tmp/lscontroller-checks/bin/fdroid scanner --exit-code app/build/outputs/apk/release/app-release-unsigned.apk
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: unsigned-release-and-checks
+          path: |
+            app/build/outputs/apk/release/app-release-unsigned.apk
+            app/build/reports/lint-results-release.*
+            build/reproducibility/report.json

@@ -1,0 +1,1 @@
+Add F-Droid metadata, screenshots, and release documentation. Handle denied Bluetooth permissions and failed broadcasts. Pin the build toolchain and dependencies for repeatable release builds. Add an original adaptive and themed launcher icon.

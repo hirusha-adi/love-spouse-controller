@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="500" viewBox="0 0 1024 500">
+  <!-- SPDX-License-Identifier: MIT; original artwork, Copyright 2026 Hirusha Adikari -->
+  <rect width="1024" height="500" fill="#11141C"/>
+  <circle cx="824" cy="250" r="230" fill="#181F2E"/>
+  <circle cx="824" cy="250" r="178" fill="none" stroke="#26364F" stroke-width="2"/>
+  <g transform="translate(660 94) scale(3)">
+    <path d="M26 35 C16 45 16 63 26 73 M33 42 C27 49 27 59 33 66 M82 35 C92 45 92 63 82 73 M75 42 C81 49 81 59 75 66 M37 54 L45 54 L51 40 L58 68 L64 54 L71 54"
+      fill="none" stroke="#3478FF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g font-family="DejaVu Sans, sans-serif">
+    <text x="72" y="130" font-size="18" letter-spacing="3" fill="#8FAEE8">BLUETOOTH LE</text>
+    <text x="68" y="225" font-size="70" font-weight="bold" fill="#F4F6FC">LS Controller</text>
+    <text x="72" y="285" font-size="26" fill="#B4C0D4">Offline device control</text>
+    <text x="72" y="350" font-size="20" fill="#8FAEE8">9 modes · Heat · Suction</text>
+    <text x="72" y="420" font-size="16" fill="#8A95AA">Free and open source · No accounts · No ads</text>
+  </g>
+</svg>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 108 108">
+  <!-- SPDX-License-Identifier: MIT; original artwork, Copyright 2026 Hirusha Adikari -->
+  <rect width="108" height="108" rx="24" fill="#11141C"/>
+  <path d="M26 35 C16 45 16 63 26 73 M33 42 C27 49 27 59 33 66 M82 35 C92 45 92 63 82 73 M75 42 C81 49 81 59 75 66 M37 54 L45 54 L51 40 L58 68 L64 54 L71 54"
+    fill="none" stroke="#3478FF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

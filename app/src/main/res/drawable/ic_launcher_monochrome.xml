@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: MIT; original artwork, Copyright 2026 Hirusha Adikari -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:pathData="M26,35 C16,45 16,63 26,73 M33,42 C27,49 27,59 33,66 M82,35 C92,45 92,63 82,73 M75,42 C81,49 81,59 75,66 M37,54 L45,54 L51,40 L58,68 L64,54 L71,54"
+        android:strokeColor="#FFFFFFFF" android:strokeWidth="5"
+        android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:fillColor="@android:color/transparent" />
+</vector>

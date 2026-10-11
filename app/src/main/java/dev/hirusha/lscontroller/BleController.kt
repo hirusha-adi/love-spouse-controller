@@ -1,12 +1,19 @@
+// SPDX-FileCopyrightText: 2026 Hirusha Adikari
+// SPDX-License-Identifier: MIT
+
 package dev.hirusha.lscontroller
 
+import android.Manifest
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
 import android.bluetooth.le.BluetoothLeAdvertiser
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.ParcelUuid
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.*
 import java.util.UUID
 
@@ -33,116 +40,197 @@ object Protocol {
         DevicePrefix("wbeb67", byteArrayOf(0x77, 0x62, 0xEB.toByte(), 0x67, 0xC5.toByte()), 1),
     )
 
-    enum class Command(val label: String, val byte: Int) {
-        STOP("Stop", 0x00),
-        MODE1("Mode 1", 0x01),
-        MODE2("Mode 2", 0x02),
-        MODE3("Mode 3", 0x03),
-        MODE4("Mode 4", 0x04),
-        MODE5("Mode 5", 0x05),
-        MODE6("Mode 6", 0x06),
-        MODE7("Mode 7", 0x07),
-        MODE8("Mode 8", 0x08),
-        MODE9("Mode 9", 0x09),
-        HEAT_ON("Heat On", 0x25),
-        HEAT_OFF("Heat Off", 0x24),
-        SUCK1("Suck 1", 0x51),
-        SUCK2("Suck 2", 0x52),
-        SUCK3("Suck 3", 0x53),
-        SUCK4("Suck 4", 0x54),
-        SUCK5("Suck 5", 0x55),
+    enum class Command(val byte: Int) {
+        STOP(0x00),
+        MODE1(0x01), MODE2(0x02), MODE3(0x03),
+        MODE4(0x04), MODE5(0x05), MODE6(0x06),
+        MODE7(0x07), MODE8(0x08), MODE9(0x09),
+        HEAT_ON(0x25), HEAT_OFF(0x24),
+        SUCK1(0x51), SUCK2(0x52), SUCK3(0x53), SUCK4(0x54), SUCK5(0x55);
+
+        fun label(context: Context): String = when (this) {
+            STOP -> context.getString(R.string.command_stop)
+            HEAT_ON -> context.getString(R.string.command_heat_on)
+            HEAT_OFF -> context.getString(R.string.command_heat_off)
+            MODE1, MODE2, MODE3, MODE4, MODE5, MODE6, MODE7, MODE8, MODE9 ->
+                context.getString(R.string.command_mode, byte)
+            SUCK1, SUCK2, SUCK3, SUCK4, SUCK5 ->
+                context.getString(R.string.command_suction, byte - 0x50)
+        }
     }
 }
 
+data class BroadcastStatus(val text: String, val failed: Boolean = false)
+
 class BleController(context: Context) {
-
-    private val advertiser: BluetoothLeAdvertiser? = run {
-        val manager = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
-        manager?.adapter?.bluetoothLeAdvertiser
-    }
-
+    private val context = context.applicationContext
+    private val manager = this.context.getSystemService(BluetoothManager::class.java)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var cycleJob: Job? = null
+    private var currentAdvertiser: BluetoothLeAdvertiser? = null
     private var currentCallback: AdvertiseCallback? = null
 
-    val isSupported: Boolean get() = advertiser != null
+    val hasPermission: Boolean
+        get() = Build.VERSION.SDK_INT < 31 || ContextCompat.checkSelfPermission(
+            context, Manifest.permission.BLUETOOTH_ADVERTISE
+        ) == PackageManager.PERMISSION_GRANTED
 
-    // Original app uses setConnectable(true) — this changes the PDU type
-    // from ADV_NONCONN_IND to ADV_IND. Device firmware checks this.
-    private val settingsBalanced = AdvertiseSettings.Builder()
+    fun unavailableReason(): String? {
+        if (!hasPermission) return context.getString(R.string.permission_required)
+        return try {
+            val adapter = manager?.adapter
+            when {
+                adapter == null || !adapter.isMultipleAdvertisementSupported ->
+                    context.getString(R.string.ble_unsupported)
+                adapter.bluetoothLeAdvertiser == null ->
+                    context.getString(R.string.bluetooth_unavailable)
+                else -> null
+            }
+        } catch (_: SecurityException) {
+            context.getString(R.string.permission_required)
+        }
+    }
+
+    // Device firmware expects ADV_IND rather than ADV_NONCONN_IND.
+    private val settings = AdvertiseSettings.Builder()
         .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_BALANCED)
         .setConnectable(true)
         .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
         .setTimeout(0)
         .build()
 
-    private val settingsLowLatency = AdvertiseSettings.Builder()
-        .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
-        .setConnectable(true)
-        .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
-        .setTimeout(0)
-        .build()
-
-    private fun buildAdvData(prefix: ByteArray, commandByte: Int): AdvertiseData {
-        val encoded = RfPayloadEncoder.encode(prefix, commandByte)
-        return AdvertiseData.Builder()
+    private fun buildAdvData(prefix: ByteArray, commandByte: Int): AdvertiseData =
+        AdvertiseData.Builder()
             .setIncludeDeviceName(false)
             .setIncludeTxPowerLevel(false)
-            .addManufacturerData(Protocol.COMPANY_ID, encoded)
+            .addManufacturerData(Protocol.COMPANY_ID, RfPayloadEncoder.encode(prefix, commandByte))
             .addServiceUuid(Protocol.SERVICE_UUID)
             .build()
+
+    private fun advertiser(onStatus: (BroadcastStatus) -> Unit): BluetoothLeAdvertiser? {
+        val reason = unavailableReason()
+        if (reason != null) {
+            onStatus(BroadcastStatus(reason, failed = true))
+            return null
+        }
+        return try {
+            manager?.adapter?.bluetoothLeAdvertiser.also {
+                if (it == null) onStatus(BroadcastStatus(
+                    context.getString(R.string.bluetooth_unavailable), failed = true
+                ))
+            }
+        } catch (_: SecurityException) {
+            onStatus(BroadcastStatus(context.getString(R.string.permission_required), failed = true))
+            null
+        }
+    }
+
+    private fun startAdvertising(
+        advertiser: BluetoothLeAdvertiser,
+        data: AdvertiseData,
+        callback: AdvertiseCallback,
+        onStatus: (BroadcastStatus) -> Unit
+    ): Boolean {
+        currentAdvertiser = advertiser
+        currentCallback = callback
+        return try {
+            advertiser.startAdvertising(settings, data, callback)
+            true
+        } catch (_: SecurityException) {
+            stopAll()
+            onStatus(BroadcastStatus(context.getString(R.string.permission_required), failed = true))
+            false
+        } catch (_: IllegalStateException) {
+            stopAll()
+            onStatus(BroadcastStatus(context.getString(R.string.bluetooth_unavailable), failed = true))
+            false
+        }
     }
 
     fun startSingle(
         prefix: ByteArray,
         commandByte: Int,
-        onStatus: (String) -> Unit
+        onStatus: (BroadcastStatus) -> Unit
     ) {
         stopAll()
-        val data = buildAdvData(prefix, commandByte)
-        val cb = object : AdvertiseCallback() {
-            override fun onStartSuccess(s: AdvertiseSettings) {
-                onStatus("Broadcasting")
+        val advertiser = advertiser(onStatus) ?: return
+        val callback = object : AdvertiseCallback() {
+            override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
+                if (currentCallback === this) {
+                    onStatus(BroadcastStatus(context.getString(R.string.broadcasting)))
+                }
             }
-            override fun onStartFailure(error: Int) {
-                onStatus("Failed (error $error)")
+
+            override fun onStartFailure(errorCode: Int) {
+                if (currentCallback === this) {
+                    stopAll()
+                    onStatus(BroadcastStatus(
+                        context.getString(R.string.broadcast_failed, errorCode), failed = true
+                    ))
+                }
             }
         }
-        currentCallback = cb
-        advertiser?.startAdvertising(settingsBalanced, data, cb)
+        startAdvertising(advertiser, buildAdvData(prefix, commandByte), callback, onStatus)
     }
 
     fun startCycle(
         commandByte: Int,
         dwellMs: Long = 300,
-        onStatus: (String) -> Unit
+        onStatus: (BroadcastStatus) -> Unit
     ) {
         stopAll()
-        cycleJob = CoroutineScope(Dispatchers.Default).launch {
+        val advertiser = advertiser(onStatus) ?: return
+        cycleJob = scope.launch {
             var round = 1
             while (isActive) {
-                for ((i, dp) in Protocol.PREFIXES.withIndex()) {
-                    if (!isActive) break
-                    withContext(Dispatchers.Main) {
-                        onStatus("Round $round [${i + 1}/${Protocol.PREFIXES.size}] ${dp.name}")
+                for ((index, prefix) in Protocol.PREFIXES.withIndex()) {
+                    ensureActive()
+                    val result = CompletableDeferred<Int>()
+                    val callback = object : AdvertiseCallback() {
+                        override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
+                            result.complete(0)
+                        }
+                        override fun onStartFailure(errorCode: Int) {
+                            result.complete(errorCode)
+                        }
                     }
-                    val data = buildAdvData(dp.bytes, commandByte)
-                    val latch = CompletableDeferred<Unit>()
-                    val cb = object : AdvertiseCallback() {
-                        override fun onStartSuccess(s: AdvertiseSettings) { latch.complete(Unit) }
-                        override fun onStartFailure(e: Int) { latch.complete(Unit) }
+                    if (!startAdvertising(
+                        advertiser, buildAdvData(prefix.bytes, commandByte), callback, onStatus
+                    )) return@launch
+                    val errorCode = withTimeoutOrNull(5_000) { result.await() }
+                    if (errorCode != 0) {
+                        stopAll()
+                        val message = if (errorCode == null) {
+                            context.getString(R.string.broadcast_timeout)
+                        } else {
+                            context.getString(R.string.broadcast_failed, errorCode)
+                        }
+                        onStatus(BroadcastStatus(message, failed = true))
+                        return@launch
                     }
-                    withContext(Dispatchers.Main) {
-                        currentCallback = cb
-                        advertiser?.startAdvertising(settingsBalanced, data, cb)
-                    }
-                    latch.await()
+                    onStatus(BroadcastStatus(context.getString(
+                        R.string.broadcast_round, round, index + 1, Protocol.PREFIXES.size, prefix.name
+                    )))
                     delay(dwellMs)
-                    withContext(Dispatchers.Main) {
-                        advertiser?.stopAdvertising(cb)
-                    }
-                    currentCallback = null
+                    stopCurrentAdvertisement()
                 }
                 round++
+            }
+        }
+    }
+
+    private fun stopCurrentAdvertisement() {
+        val callback = currentCallback
+        val advertiser = currentAdvertiser
+        currentCallback = null
+        currentAdvertiser = null
+        if (callback != null && advertiser != null) {
+            try {
+                advertiser.stopAdvertising(callback)
+            } catch (_: SecurityException) {
+                // Permission can be revoked while an advertisement is active.
+            } catch (_: IllegalStateException) {
+                // Bluetooth can be disabled while an advertisement is active.
             }
         }
     }
@@ -150,7 +238,11 @@ class BleController(context: Context) {
     fun stopAll() {
         cycleJob?.cancel()
         cycleJob = null
-        currentCallback?.let { advertiser?.stopAdvertising(it) }
-        currentCallback = null
+        stopCurrentAdvertisement()
+    }
+
+    fun close() {
+        stopAll()
+        scope.cancel()
     }
 }

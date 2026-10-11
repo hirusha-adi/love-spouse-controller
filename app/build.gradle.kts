@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Hirusha Adikari
+// SPDX-License-Identifier: MIT
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -7,16 +10,21 @@ plugins {
 android {
     namespace = "dev.hirusha.lscontroller"
     compileSdk = 35
+    buildToolsVersion = "34.0.0"
 
     defaultConfig {
         applicationId = "dev.hirusha.lscontroller"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 3
+        versionName = "2.1"
+        resourceConfigurations += listOf("en")
     }
 
     buildTypes {
+        debug {
+            applicationIdSuffix = ".debug"
+        }
         release {
             isMinifyEnabled = false
         }
@@ -34,6 +42,31 @@ android {
     buildFeatures {
         compose = true
     }
+
+    // F-Droid builds and signs the same release variant as any other distributor.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+
+}
+
+kotlin {
+    jvmToolchain(17)
+}
+
+dependencyLocking {
+    lockAllConfigurations()
+}
+
+val prepareLicenseAssets by tasks.registering(Sync::class) {
+    from(rootProject.file("LICENSE"), rootProject.file("NOTICE"), rootProject.file("LICENSES/Apache-2.0.txt"))
+    into(layout.buildDirectory.dir("generated/licenseAssets/licenses"))
+}
+
+android.sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/licenseAssets"))
+tasks.named("preBuild") {
+    dependsOn(prepareLicenseAssets)
 }
 
 dependencies {

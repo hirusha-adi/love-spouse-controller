@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">LS Controller</string>
+    <string name="idle">Idle</string>
+    <string name="stopped">Stopped</string>
+    <string name="broadcasting">Broadcasting</string>
+    <string name="prefix">Prefix</string>
+    <string name="all_prefixes">All (cycle)</string>
+    <string name="prefix_option">%1$s (%2$d)</string>
+    <string name="vibration">VIBRATION</string>
+    <string name="heat">HEAT</string>
+    <string name="suction">SUCTION</string>
+    <string name="heat_on_label">ON</string>
+    <string name="heat_off_label">OFF</string>
+    <string name="stop_device">STOP DEVICE</string>
+    <string name="stop_broadcast">STOP BROADCAST</string>
+    <string name="command_stop">Stop</string>
+    <string name="command_mode">Mode %1$d</string>
+    <string name="command_heat_on">Heat On</string>
+    <string name="command_heat_off">Heat Off</string>
+    <string name="command_suction">Suck %1$d</string>
+    <string name="ble_unsupported">BLE advertising not supported</string>
+    <string name="bluetooth_unavailable">Turn on Bluetooth to broadcast</string>
+    <string name="permission_required">Bluetooth permission required</string>
+    <string name="allow_bluetooth">ALLOW BLUETOOTH</string>
+    <string name="broadcast_failed">Failed (error %1$d)</string>
+    <string name="broadcast_timeout">Bluetooth did not respond. Try again.</string>
+    <string name="broadcast_round">Round %1$d [%2$d/%3$d] %4$s</string>
+</resources>

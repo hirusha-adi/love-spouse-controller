@@ -1,0 +1,24 @@
+Love Spouse Controller
+Copyright (c) 2026 Hirusha Adikari
+
+The application source, translations, documentation, and project artwork are
+licensed under the MIT license in LICENSE.
+
+The Gradle wrapper scripts and gradle/wrapper/gradle-wrapper.jar are distributed
+by the Gradle project under Apache-2.0; see LICENSES/Apache-2.0.txt. Their upstream
+copyright notices are retained. The wrapper JAR matches Gradle 8.7's published
+SHA-256: cb0da6751c2b753a16ac168bb354870ebb1e162e9083f116729cec9c781156b8.
+
+AndroidX libraries and the Android Gradle Plugin are Apache-2.0 software from
+the Android Open Source Project. Kotlin and kotlinx.coroutines are Apache-2.0
+software from JetBrains and contributors. Gradle is Apache-2.0 software from
+Gradle contributors. Transitive dependencies retain their respective licenses;
+this notice does not relicense third-party software. Consult dependency POMs,
+source repositories, and embedded license notices for exact attribution.
+The APK bundles the project license, this notice, and the Apache-2.0 license
+in assets/licenses/.
+
+Love Spouse and Bluetooth are names of third-party products or technologies.
+Their use describes compatibility; this project is independent and does not
+claim affiliation, endorsement, or ownership of those names. The launcher icon
+and store artwork use an original radio/pulse design, not third-party logos.

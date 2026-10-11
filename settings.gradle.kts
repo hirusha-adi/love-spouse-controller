@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Hirusha Adikari
+// SPDX-License-Identifier: MIT
+
 pluginManagement {
     repositories {
         google()

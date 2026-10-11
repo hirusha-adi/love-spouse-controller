@@ -1,79 +1,83 @@
 # Love Spouse Controller
 
-<img width="1672" height="941" alt="image" src="https://github.com/user-attachments/assets/56169fd4-45c6-4a0f-8ae8-91c28b5f5f26" />
+An independent, offline Android controller for intimate devices using the
+Love Spouse / Weibu IoT Bluetooth Low Energy advertising protocol. No pairing,
+account, Internet access, or official companion app is needed.
 
-An Android app for controlling BLE-based intimate devices that are compatible with the Love Spouse ecosystem. This includes a wide range of white-label and generic adult toys sold under various brand names that all use the same underlying BLE advertising protocol.
-
-## Compatible Devices
-
-This app works with devices that use the Love Spouse / Weibu IoT BLE 2.4GHz advertising protocol. These are commonly sold on Amazon, AliExpress, and other marketplaces under many different brand names, but they all share the same app and communication protocol. If your device pairs with the "Love Spouse" app on the Play Store / App Store, it's compatible.
-
-The app comes pre-loaded with all known device prefixes, covering the entire device catalog.
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" width="320" alt="LS Controller showing vibration, heat, and suction controls" />
 
 ## Features
 
-- **Vibration control** - 9 vibration modes
-- **Heating control** - Toggle heating element on/off (on supported devices)
-- **Suction control** - 5 suction intensity levels (on supported devices)
-- **Prefix cycling** - Automatically cycles through all known device prefixes, or target a specific one
-- **Material You** - Dynamic color theming on Android 12+
+- Nine vibration modes.
+- Heat on/off commands and five suction levels on supported devices.
+- Cycle through five included prefixes, or target a specific device family.
+- Material You colors on Android 12+, with light and dark themes.
+- English interface, screen-reader labels, and scrolling on smaller screens.
+- No ads, analytics, accounts, location permission, or cloud services.
+
+Compatibility depends on firmware; support for every device or function is
+not guaranteed. The app cannot detect devices or receive acknowledgements.
+Use it only with devices you own and with the consent of anyone using them.
+This app is intended for adults.
 
 ## Install
 
-### Pre-built APK
+Published builds, when available, are listed on
+[GitHub Releases](https://github.com/hirusha-adi/love-spouse-controller/releases).
+The repository is prepared for F-Droid submission; it is not yet listed there.
+See [the submission guide](docs/FDROID.md).
 
-Download `ls-controller-debug.apk` from this repo and install it on your phone:
+A local debug build is `app/build/outputs/apk/debug/app-debug.apk`. Debug builds
+use the separate `dev.hirusha.lscontroller.debug` ID to coexist with releases.
 
-```bash
-adb install ls-controller-debug.apk
-```
+## Build from source
 
-Or transfer the APK to your phone and install it manually. You'll need "Install from unknown sources" enabled.
-
-### Build from source
-
-1. Open the project in Android Studio
-2. Sync Gradle
-3. Run on your device
-
-Or from the command line:
+Use OpenJDK 17, Android SDK platform 35, and Build Tools 34.0.0. Gradle 8.7 and
+Android Gradle Plugin 8.6.1 are pinned. Android Studio is optional.
 
 ```bash
-# Set your Android SDK path
-echo "sdk.dir=/path/to/your/android/sdk" > local.properties
-
-# Build
-./gradlew assembleDebug
-
-# Install
-adb install app/build/outputs/apk/debug/app-debug.apk
+export ANDROID_HOME=/path/to/android-sdk
+"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;34.0.0"
+./gradlew --no-daemon --dependency-verification strict assembleDebug assembleRelease lintRelease
+python3 tools/check_metadata.py
 ```
+
+Alternatively, put `sdk.dir=/path/to/android-sdk` in untracked `local.properties`.
+Install the debug build with `adb install app/build/outputs/apk/debug/app-debug.apk`.
+The unsigned release is `app/build/outputs/apk/release/app-release-unsigned.apk`.
+F-Droid builds and signs this same release variant. See [release instructions](docs/RELEASING.md)
+for signing and reproducibility checks. No API keys or signing secrets are needed to build.
 
 ## Usage
 
-1. Open the app and grant the Bluetooth permission when prompted
-2. Select a prefix from the dropdown:
-   - **All (cycle)** - Rotates through all known prefixes at 300ms each. Use this if you don't know which prefix your device uses. Works with virtually every compatible device.
-   - **A specific prefix** - If you know your device's prefix, select it for faster response.
-3. Tap a mode button to start broadcasting that command
-4. Tap the same button again to stop, or use the buttons at the bottom:
-   - **STOP DEVICE** - Sends the stop command (0x00) to the device
-   - **Stop Broadcasting** - Silently stops the BLE radio without sending any command
+1. Turn on Bluetooth and grant advertising permission when prompted on Android 12+.
+2. Select **All (cycle)** if the prefix is unknown, or select a specific prefix for a faster response.
+3. Tap a vibration mode, heating command, or suction level. Only one command is broadcast at a time.
+4. **STOP DEVICE** broadcasts a stop command. **STOP BROADCAST** or tapping the selected control again ends transmission without sending a stop command. A device may continue its last action.
 
-## How It Works
+All-prefix mode rotates through five prefixes at approximately 300 ms per
+successful advertisement, plus startup time. It may affect multiple nearby
+devices. Prefix counts describe catalog entries, not connected or nearby devices.
 
-The app uses Android's BLE advertising API to broadcast encoded command packets. Compatible devices passively listen for these packets and respond when they detect a matching prefix in the manufacturer data field. No BLE connection or pairing is required.
+## Permissions and privacy
 
-## Requirements
+Android 12+ uses `BLUETOOTH_ADVERTISE`; Android 8–11 uses normal `BLUETOOTH` and
+`BLUETOOTH_ADMIN` permissions. Android 8.0+ and BLE advertising support are required.
+No Internet, scanning, location, or Bluetooth connection permission is needed.
+See [PRIVACY.md](PRIVACY.md).
 
-- Android 8.0+ (API 26)
-- Device with BLE advertising support (most modern Android phones)
-- Bluetooth permission granted
+## Contributing
 
-## Permissions
+Report bugs or compatibility details in the
+[issue tracker](https://github.com/hirusha-adi/love-spouse-controller/issues).
+Keep the interface and store listing in English. Include the version-code
+changelog in `fastlane/metadata/android/en-US/changelogs/` when preparing
+releases, and run the checks above.
 
-- `BLUETOOTH_ADVERTISE` - Required to broadcast BLE advertising packets
+## License
 
-## Disclaimer
-
-This app is provided for educational and personal use only. Only use it with devices you own.
+Project code, documentation, and original artwork are
+[MIT licensed](LICENSE). Gradle wrapper files remain Apache-2.0; see [NOTICE](NOTICE).
+Editable artwork is in `artwork/`; `tools/render_artwork.sh` regenerates store
+graphics using librsvg and DejaVu Sans fonts. The project is independent of
+Love Spouse and device manufacturers.
